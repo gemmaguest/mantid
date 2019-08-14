@@ -9,12 +9,11 @@
 #include "GUI/Batch/IBatchPresenter.h"
 #include "GUI/Common/IMessageHandler.h"
 #include "GUI/Common/IPythonRunner.h"
-#include "GUI/RunsTable/RunsTablePresenter.h"
 #include "IRunsView.h"
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidQtWidgets/Common/AlgorithmRunner.h"
+#include "MantidQtWidgets/Common/ParseKeyValueString.h"
 #include "MantidQtWidgets/Common/ProgressPresenter.h"
-#include "QtCatalogSearcher.h"
 
 #include <algorithm>
 #include <fstream>
@@ -47,10 +46,11 @@ namespace ISISReflectometry {
 RunsPresenter::RunsPresenter(
     IRunsView *mainView, ProgressableView *progressableView,
     const RunsTablePresenterFactory &makeRunsTablePresenter,
+    SearcherFactory makeSearcher,
     double thetaTolerance, std::vector<std::string> const &instruments,
     int defaultInstrumentIndex, IMessageHandler *messageHandler)
     : m_runNotifier(std::make_unique<CatalogRunNotifier>(mainView)),
-      m_searcher(std::make_unique<QtCatalogSearcher>(mainView)),
+      //m_searcher(std::make_unique<QtCatalogSearcher>(mainView)),
       m_view(mainView), m_progressView(progressableView),
       m_mainPresenter(nullptr), m_messageHandler(messageHandler),
       m_instruments(instruments),
@@ -61,6 +61,7 @@ RunsPresenter::RunsPresenter(
   m_view->subscribe(this);
   m_tablePresenter = makeRunsTablePresenter(m_view->table());
   m_tablePresenter->acceptMainPresenter(this);
+  m_searcher = makeSearcher(m_view);
   m_runNotifier->subscribe(this);
   m_searcher->subscribe(this);
 

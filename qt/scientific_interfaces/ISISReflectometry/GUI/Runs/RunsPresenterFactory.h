@@ -22,10 +22,12 @@ class RunsPresenterFactory {
 public:
   RunsPresenterFactory( // cppcheck-suppress passedByValue
       RunsTablePresenterFactory runsTablePresenterFactory,
+    SearcherFactory searcherFactory,
       double thetaTolerance, std::vector<std::string> instruments,
       int defaultInstrumentIndex, IMessageHandler *messageHandler,
       IPythonRunner *pythonRunner)
       : m_runsTablePresenterFactory(std::move(runsTablePresenterFactory)),
+        m_searcherFactory(searcherFactory),
         m_thetaTolerance(std::move(thetaTolerance)),
         m_instruments(std::move(instruments)),
         m_defaultInstrumentIndex(std::move(defaultInstrumentIndex)),
@@ -33,12 +35,13 @@ public:
 
   std::unique_ptr<IRunsPresenter> make(IRunsView *view) {
     return std::make_unique<RunsPresenter>(
-        view, view, m_runsTablePresenterFactory, m_thetaTolerance,
+        view, view, m_runsTablePresenterFactory, m_searcherFactory, m_thetaTolerance,
         m_instruments, m_defaultInstrumentIndex, m_messageHandler);
   }
 
 private:
   RunsTablePresenterFactory m_runsTablePresenterFactory;
+  SearcherFactory m_searcherFactory;
   double m_thetaTolerance;
   std::vector<std::string> m_instruments;
   int m_defaultInstrumentIndex;

@@ -506,11 +506,12 @@ private:
   public:
     RunsPresenterFriend(IRunsView *mainView, ProgressableView *progressView,
                         const RunsTablePresenterFactory &makeRunsTablePresenter,
+                        SearcherFactory makeSearcher,
                         double thetaTolerance,
                         std::vector<std::string> const &instruments,
                         int defaultInstrumentIndex,
                         IMessageHandler *messageHandler)
-        : RunsPresenter(mainView, progressView, makeRunsTablePresenter,
+        : RunsPresenter(mainView, progressView, makeRunsTablePresenter, makeSearcher,
                         thetaTolerance, instruments, defaultInstrumentIndex,
                         messageHandler) {}
   };
@@ -525,8 +526,14 @@ private:
 #endif
     auto makeRunsTablePresenter = RunsTablePresenterFactory(
         m_instruments, m_thetaTolerance, std::move(plotter));
+    auto makeSearcher = [this](IRunsView *runsView) {
+      auto mockSearcher = std::make_unique<MockSearcher>();
+      m_searcher = dynamic_cast<NiceMock<MockSearcher> *>(mockSearcher.get());
+      return mockSearcher;
+    };
+
     auto presenter = RunsPresenterFriend(
-        &m_view, &m_progressView, makeRunsTablePresenter, m_thetaTolerance,
+        &m_view, &m_progressView, makeRunsTablePresenter, makeSearcher, m_thetaTolerance,
         m_instruments, defaultInstrumentIndex, &m_messageHandler);
 
     presenter.acceptMainPresenter(&m_mainPresenter);
@@ -536,9 +543,6 @@ private:
     presenter.m_runNotifier.reset(new NiceMock<MockRunNotifier>());
     m_runNotifier = dynamic_cast<NiceMock<MockRunNotifier> *>(
         presenter.m_runNotifier.get());
-    presenter.m_searcher.reset(new NiceMock<MockSearcher>());
-    m_searcher =
-        dynamic_cast<NiceMock<MockSearcher> *>(presenter.m_searcher.get());
 
     // Return an empty table by default
     ON_CALL(*m_runsTablePresenter, runsTable())

@@ -47,6 +47,8 @@ public:
                                      const std::string &instrument,
                                      SearchType searchType) const = 0;
 };
+
+using SearcherFactory = std::function < std::unique_ptr<ISearcher>(IRunsView*)>;
 } // namespace ISISReflectometry
 } // namespace CustomInterfaces
 } // namespace MantidQt

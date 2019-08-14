@@ -9,6 +9,7 @@
 #include "GUI/Batch/BatchPresenterFactory.h"
 #include "GUI/Batch/QtBatchView.h"
 #include "GUI/Common/Plotter.h"
+#include "GUI/Runs/QtCatalogSearcher.h"
 #include <QMessageBox>
 #include <QToolButton>
 
@@ -81,12 +82,13 @@ void QtMainWindowView::initLayout() {
 #endif
   auto makeRunsTablePresenter = RunsTablePresenterFactory(
       instruments, thetaTolerance, std::move(plotter));
+  auto makeSearcher = [](IRunsView* runsView) { return std::make_unique<QtCatalogSearcher>(runsView);  };
 
   auto defaultInstrumentIndex = getDefaultInstrumentIndex(instruments);
   auto messageHandler = this;
   auto makeRunsPresenter = RunsPresenterFactory(
-      std::move(makeRunsTablePresenter), thetaTolerance, instruments,
-      defaultInstrumentIndex, messageHandler, pythonRunner);
+      std::move(makeRunsTablePresenter), makeSearcher, thetaTolerance,
+      instruments, defaultInstrumentIndex, messageHandler, pythonRunner);
 
   auto makeEventPresenter = EventPresenterFactory();
   auto makeSaveSettingsPresenter = SavePresenterFactory();

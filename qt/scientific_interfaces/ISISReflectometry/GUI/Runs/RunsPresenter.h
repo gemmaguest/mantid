@@ -57,6 +57,7 @@ class MANTIDQT_ISISREFLECTOMETRY_DLL RunsPresenter
 public:
   RunsPresenter(IRunsView *mainView, ProgressableView *progressView,
                 const RunsTablePresenterFactory &makeRunsTablePresenter,
+                SearcherFactory makeSearcher,
                 double thetaTolerance,
                 std::vector<std::string> const &instruments,
                 int defaultInstrumentIndex, IMessageHandler *messageHandler);
@@ -118,13 +119,13 @@ protected:
   std::unique_ptr<IRunsTablePresenter> m_tablePresenter;
   /// The run notifier implementation
   std::unique_ptr<IRunNotifier> m_runNotifier;
-  /// The search implementation
-  std::unique_ptr<ISearcher> m_searcher;
 
   std::string liveDataReductionOptions(const std::string &inputWorkspace,
                                        const std::string &instrument);
 
 private:
+  /// The search implementation
+  std::unique_ptr<ISearcher> m_searcher;
   /// The main view we're managing
   IRunsView *m_view;
   /// The progress view
