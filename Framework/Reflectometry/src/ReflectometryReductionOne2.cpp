@@ -35,7 +35,6 @@ using namespace Mantid::Indexing;
 
 namespace Mantid {
 namespace Reflectometry {
-
 /*Anonomous namespace */
 namespace {
 
@@ -55,39 +54,6 @@ static constexpr double radToDeg = 180. / M_PI;
 double getDetectorTwoTheta(const SpectrumInfo *spectrumInfo,
                            const size_t spectrumIdx) {
   return spectrumInfo->signedTwoTheta(spectrumIdx);
-}
-
-/** Get the start/end of the lambda range for the detector associated
- * with the given spectrum
- *
- * @return : the lambda range
- */
-double getLambdaRange(const HistogramX &xValues, const int xIdx) {
-  // The lambda range is the bin width from the given index to the next.
-  if (xIdx < 0 || xIdx + 1 >= static_cast<int>(xValues.size())) {
-    throw std::runtime_error("Error accessing X values out of range (index=" +
-                             std::to_string(xIdx + 1) +
-                             ", size=" + std::to_string(xValues.size()));
-  }
-
-  double result = xValues[xIdx + 1] - xValues[xIdx];
-  return result;
-}
-
-/** Get the lambda value at the centre of the detector associated
- * with the given spectrum
- *
- * @return : the lambda range
- */
-double getLambda(const HistogramX &xValues, const int xIdx) {
-  if (xIdx < 0 || xIdx >= static_cast<int>(xValues.size())) {
-    throw std::runtime_error(
-        "Error accessing X values out of range (index=" + std::to_string(xIdx) +
-        ", size=" + std::to_string(xValues.size()));
-  }
-
-  // The centre of the bin is the lower bin edge plus half the width
-  return xValues[xIdx] + getLambdaRange(xValues, xIdx) / 2.0;
 }
 
 /**
@@ -994,57 +960,6 @@ void ReflectometryReductionOne2::findIvsLamRange(
         ") is negative.");
   }
 }
-
-/**
- * Construct an "empty" output workspace in virtual-lambda for summation in Q.
- * The workspace will have the same x values as the input workspace but the y
- * values will all be zero.
- *
- * @return : a 1D workspace where y values are all zero
- */
-MatrixWorkspace_sptr ReflectometryReductionOne2::constructIvsLamWS(
-    const MatrixWorkspace_sptr &detectorWS) {
-
-  // There is one output spectrum for each detector group
-  const size_t numGroups = detectorGroups().size();
-  // Calculate the number of bins based on the min/max wavelength, using
-  // the same bin width as the input workspace
-  const double binWidth = (detectorWS->x(0).back() - detectorWS->x(0).front()) /
-                          static_cast<double>(detectorWS->blocksize());
-  const auto numBins = static_cast<int>(
-      std::ceil((wavelengthMax() - wavelengthMin()) / binWidth));
-  // Construct the histogram with these X values. Y and E values are zero.
-  const BinEdges xValues(numBins, LinearGenerator(wavelengthMin(), binWidth));
-  // Create the output workspace
-  MatrixWorkspace_sptr outputWS = WorkspaceFactory::Instance().create(
-      detectorWS, numGroups, numBins, numBins - 1);
-
-  // Loop through each detector group in the input and collate the related list
-  // of spectrum numbers for the output
-  std::vector<SpectrumNumber> spectrumNumbers;
-  for (size_t groupIdx = 0; groupIdx < numGroups; ++groupIdx) {
-    // Get the detectors in this group
-    auto &detectors = detectorGroups()[groupIdx];
-    // Set the x values for this spectrum
-    outputWS->setBinEdges(groupIdx, xValues);
-    // Set the detector ID from the twoThetaR detector.
-    const size_t twoThetaRIdx = twoThetaRDetectorIdx(detectors);
-    auto &outSpec = outputWS->getSpectrum(groupIdx);
-    const detid_t twoThetaRDetID =
-        m_spectrumInfo->detector(twoThetaRIdx).getID();
-    outSpec.clearDetectorIDs();
-    outSpec.addDetectorID(twoThetaRDetID);
-    // Set the spectrum number from the twoThetaR detector
-    spectrumNumbers.emplace_back(
-        detectorWS->indexInfo().spectrumNumber(twoThetaRIdx));
-  }
-  auto indexInf = outputWS->indexInfo();
-  indexInf.setSpectrumNumbers(std::move(spectrumNumbers));
-  outputWS->setIndexInfo(indexInf);
-
-  return outputWS;
-}
-
 /**
  * Sum counts from the input workspace in lambda along lines of constant Q by
  * projecting to "virtual lambda" at a reference angle twoThetaR.
@@ -1055,169 +970,33 @@ MatrixWorkspace_sptr ReflectometryReductionOne2::constructIvsLamWS(
 MatrixWorkspace_sptr
 ReflectometryReductionOne2::sumInQ(const MatrixWorkspace_sptr &detectorWS) {
 
-  // Construct the output array in virtual lambda
-  MatrixWorkspace_sptr IvsLam = constructIvsLamWS(detectorWS);
-
-  // Loop through each input group (and corresponding output spectrum)
-  const size_t numGroups = detectorGroups().size();
-  for (size_t groupIdx = 0; groupIdx < numGroups; ++groupIdx) {
-    auto &detectors = detectorGroups()[groupIdx];
-    auto &outputE = IvsLam->dataE(groupIdx);
-
-    // Loop through each spectrum in the detector group
-    for (auto spIdx : detectors) {
-      // Get the angle of this detector and its size in twoTheta
-      const double twoTheta = getDetectorTwoTheta(m_spectrumInfo, spIdx);
-      const double bTwoTheta = getDetectorTwoThetaRange(spIdx);
-
-      // Check X length is Y length + 1
-      const auto &inputX = detectorWS->x(spIdx);
-      const auto &inputY = detectorWS->y(spIdx);
-      const auto &inputE = detectorWS->e(spIdx);
-      if (inputX.size() != inputY.size() + 1) {
-        throw std::runtime_error(
-            "Expected input workspace to be histogram data (got X len=" +
-            std::to_string(inputX.size()) +
-            ", Y len=" + std::to_string(inputY.size()) + ")");
-      }
-
-      // Create a vector for the projected errors for this spectrum.
-      // (Output Y values can simply be accumulated directly into the output
-      // workspace, but for error values we need to create a separate error
-      // vector for the projected errors from each input spectrum and then
-      // do an overall sum in quadrature.)
-      std::vector<double> projectedE(outputE.size(), 0.0);
-
-      // Process each value in the spectrum
-      const auto ySize = static_cast<int>(inputY.size());
-      for (int inputIdx = 0; inputIdx < ySize; ++inputIdx) {
-        // Do the summation in Q
-        sumInQProcessValue(inputIdx, twoTheta, bTwoTheta, inputX, inputY,
-                           inputE, detectors, groupIdx, IvsLam, projectedE);
-      }
-
-      // Sum errors in quadrature
-      const auto eSize = static_cast<int>(outputE.size());
-      for (int outIdx = 0; outIdx < eSize; ++outIdx) {
-        outputE[outIdx] += projectedE[outIdx] * projectedE[outIdx];
-      }
-    }
-
-    // Take the square root of all the accumulated squared errors for this
-    // detector group. Assumes Gaussian errors
-    double (*rs)(double) = std::sqrt;
-    std::transform(outputE.begin(), outputE.end(), outputE.begin(), rs);
-  }
-
-  return IvsLam;
-}
-
-/**
- * Share counts from an input value onto the projected output in virtual-lambda
- *
- * @param inputIdx [in] :: the index into the input arrays
- * @param twoTheta [in] :: the value of twotTheta for this spectrum
- * @param bTwoTheta [in] :: the size of the pixel in twoTheta
- * @param inputX [in] :: the input spectrum X values
- * @param inputY [in] :: the input spectrum Y values
- * @param inputE [in] :: the input spectrum E values
- * @param detectors [in] :: spectrum indices of the detectors of interest
- * @param outSpecIdx [in] :: the output spectrum index
- * @param IvsLam [in,out] :: the output workspace
- * @param outputE [in,out] :: the projected E values
- */
-void ReflectometryReductionOne2::sumInQProcessValue(
-    const int inputIdx, const double twoTheta, const double bTwoTheta,
-    const HistogramX &inputX, const HistogramY &inputY,
-    const HistogramE &inputE, const std::vector<size_t> &detectors,
-    const size_t outSpecIdx, const MatrixWorkspace_sptr &IvsLam,
-    std::vector<double> &outputE) {
-
-  // Check whether there are any counts (if not, nothing to share)
-  const double inputCounts = inputY[inputIdx];
-  if (inputCounts <= 0.0 || std::isnan(inputCounts) ||
-      std::isinf(inputCounts)) {
-    return;
-  }
-  // Get the bin width and the bin centre
-  const double bLambda = getLambdaRange(inputX, inputIdx);
-  const double lambda = getLambda(inputX, inputIdx);
-  // Project these coordinates onto the virtual-lambda output (at twoThetaR)
-  double lambdaVMin = 0.0;
-  double lambdaVMax = 0.0;
-  getProjectedLambdaRange(lambda, twoTheta, bLambda, bTwoTheta, detectors,
-                          lambdaVMin, lambdaVMax);
-  // Share the input counts into the output array
-  sumInQShareCounts(inputCounts, inputE[inputIdx], bLambda, lambdaVMin,
-                    lambdaVMax, outSpecIdx, std::move(IvsLam), outputE);
-}
-
-/**
- * Share the given input counts into the output array bins proportionally
- * according to how much the bins overlap the given lambda range.
- * outputX.size() must equal outputY.size() + 1
- *
- * @param inputCounts [in] :: the input counts to share out
- * @param inputErr [in] :: the input errors to share out
- * @param bLambda [in] :: the bin width in lambda
- * @param lambdaMin [in] :: the start of the range to share counts to
- * @param lambdaMax [in] :: the end of the range to share counts to
- * @param outSpecIdx [in] :: the spectrum index to be updated in the output
- * workspace
- * @param IvsLam [in,out] :: the output workspace
- * @param outputE [in,out] :: the projected E values
- */
-void ReflectometryReductionOne2::sumInQShareCounts(
-    const double inputCounts, const double inputErr, const double bLambda,
-    const double lambdaMin, const double lambdaMax, const size_t outSpecIdx,
-    const MatrixWorkspace_sptr &IvsLam, std::vector<double> &outputE) {
-  // Check that we have histogram data
-  const auto &outputX = IvsLam->dataX(outSpecIdx);
-  auto &outputY = IvsLam->dataY(outSpecIdx);
-  if (outputX.size() != outputY.size() + 1) {
+  if (detectorGroups().size() > 1)
     throw std::runtime_error(
-        "Expected output array to be histogram data (got X len=" +
-        std::to_string(outputX.size()) +
-        ", Y len=" + std::to_string(outputY.size()) + ")");
-  }
+        "Multiple groups are not supported when summing in Q; please only "
+        "specify a single group in the ProcessingInstructions.");
 
-  const double totalWidth = lambdaMax - lambdaMin;
+  auto &detectors = detectorGroups()[0];
+  auto detectorsList = std::string();
+  for (auto det : detectors)
+    detectorsList.append(std::to_string(det) + std::string(","));
 
-  // Get the first bin edge in the output X array that is within range.
-  // There will probably be some overlap, so start from the bin edge before
-  // this (unless we're already at the first bin edge).
-  auto startIter = std::lower_bound(outputX.begin(), outputX.end(), lambdaMin);
-  if (startIter != outputX.begin()) {
-    --startIter;
-  }
+  auto const beamCentre = static_cast<double>(twoThetaRDetectorIdx(detectors));
+  const std::string reductionType = getProperty("ReductionType");
+  auto const flatSample = (reductionType != "NonFlatSample");
 
-  // Loop through all overlapping output bins. Convert the iterator to an
-  // index because we need to index both the X and Y arrays.
-  const auto xSize = static_cast<int>(outputX.size());
-  for (auto outIdx = startIter - outputX.begin(); outIdx < xSize - 1;
-       ++outIdx) {
-    const double binStart = outputX[outIdx];
-    const double binEnd = outputX[outIdx + 1];
-    if (binStart > lambdaMax) {
-      // No longer in the overlap region so we're finished
-      break;
-    }
-    // Add a share of the input counts to this bin based on the proportion of
-    // overlap.
-    if (totalWidth > Tolerance) {
-      // Share counts out proportionally based on the overlap of this range
-      const double overlapWidth =
-          std::min({bLambda, lambdaMax - binStart, binEnd - lambdaMin});
-      const double fraction = overlapWidth / totalWidth;
-      outputY[outIdx] += inputCounts * fraction;
-      outputE[outIdx] += inputErr * fraction;
-    } else {
-      // Projection to a single value. Put all counts in the overlapping output
-      // bin.
-      outputY[outIdx] += inputCounts;
-      outputE[outIdx] += inputCounts;
-    }
-  }
+  auto alg = this->createChildAlgorithm("ReflectometrySumInQ");
+  alg->initialize();
+  alg->setProperty("InputWorkspace", detectorWS);
+  alg->setProperty("InputWorkspaceIndexType", "WorkspaceIndex");
+  alg->setProperty("InputWorkspaceIndexSet", detectorsList);
+  alg->setProperty("BeamCentre", beamCentre);
+  alg->setProperty("ThetaIn", getPropertyValue("ThetaIn"));
+  alg->setProperty("FlatSample", flatSample);
+  alg->setProperty("IncludePartialBins", m_partialBins);
+  alg->execute();
+
+  MatrixWorkspace_sptr IvsLam = alg->getProperty("OutputWorkspace");
+  return IvsLam;
 }
 
 /**
