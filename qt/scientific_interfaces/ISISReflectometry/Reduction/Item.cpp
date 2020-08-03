@@ -50,8 +50,8 @@ void Item::setError(std::string const &msg) { m_itemState.setError(msg); }
 
 bool Item::requiresProcessing(bool reprocessFailed) const {
   // Check the skipped flag. This means that items will not be processed even
-  // if we're reprocessing failed rows
-  if (m_skipped)
+  // if we're reprocessing failed rows. Excluded items will never be processed.
+  if (m_skipped || exclude())
     return false;
 
   switch (state()) {
@@ -69,6 +69,10 @@ bool Item::requiresProcessing(bool reprocessFailed) const {
   }
   return false;
 }
+
+bool Item::exclude() const { return false; }
+
+std::string Item::excludeReason() const { return ""; }
 } // namespace ISISReflectometry
 } // namespace CustomInterfaces
 } // namespace MantidQt

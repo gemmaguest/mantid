@@ -28,6 +28,7 @@ class Prop:
     GROUP_TOF = 'GroupTOFWorkspaces'
     RELOAD = 'ReloadInvalidWorkspaces'
     DEBUG = 'Debug'
+    EXCLUDE_REASON = 'ExcludeReason'
     OUTPUT_WS = 'OutputWorkspace'
     OUTPUT_WS_BINNED = 'OutputWorkspaceBinned'
     OUTPUT_WS_LAM = 'OutputWorkspaceWavelength'
@@ -75,8 +76,13 @@ class ReflectometryISISLoadAndProcess(DataProcessorAlgorithm):
 
     def PyExec(self):
         """Execute the algorithm."""
-        self._reload = self.getProperty(Prop.RELOAD).value
+        # Check if we should exclude this set of runs
+        excludeProp = self.getProperty(Prop.EXCLUDE_REASON)
+        if not excludeProp.isDefault:
+            self.log().information(excludeProp.value)
+            return
         # Convert run numbers to real workspaces
+        self._reload = self.getProperty(Prop.RELOAD).value
         inputRuns = self.getProperty(Prop.RUNS).value
         inputWorkspaces = self._getInputWorkspaces(inputRuns, False)
         firstTransRuns = self.getProperty(Prop.FIRST_TRANS_RUNS).value
@@ -127,6 +133,7 @@ class ReflectometryISISLoadAndProcess(DataProcessorAlgorithm):
                                                  validator=mandatoryInputRuns),
                              doc='A list of run numbers or workspace names for the input runs. '
                                  'Multiple runs will be summed before reduction.')
+        self.declareProperty(Prop.EXCLUDE_REASON, '', doc='If set, processing these run(s) will be skipped and the algorithm will do nothing; used in batch processing')
         # Add properties from child algorithm
         properties = [
             'ThetaIn', 'ThetaLogName',

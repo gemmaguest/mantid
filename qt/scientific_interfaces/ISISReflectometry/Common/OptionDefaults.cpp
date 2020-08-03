@@ -19,7 +19,7 @@ OptionDefaults::OptionDefaults(
     : m_instrument(std::move(instrument)) {
   // Get the algorithm for which we'll take defaults if available
   m_algorithm = Mantid::API::AlgorithmManager::Instance().createUnmanaged(
-      "ReflectometryReductionOneAuto");
+      "ReflectometryISISLoadAndProcess");
   m_algorithm->initialize();
 }
 

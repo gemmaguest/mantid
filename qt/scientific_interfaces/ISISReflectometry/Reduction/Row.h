@@ -53,6 +53,8 @@ public:
 
   int totalItems() const override;
   int completedItems() const override;
+  bool exclude() const override;
+  std::string excludeReason() const override;
 
 private:
   std::vector<std::string> m_runNumbers;

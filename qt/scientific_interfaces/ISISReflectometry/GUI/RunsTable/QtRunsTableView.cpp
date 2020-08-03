@@ -106,13 +106,31 @@ void QtRunsTableView::showAlgorithmPropertyHintsInOptionsColumn() {
   m_jobs->setHintsForColumn(
       optionsColumn,
       std::make_unique<MantidQt::MantidWidgets::AlgorithmHintStrategy>(
-          "ReflectometryReductionOneAuto",
-          std::vector<std::string>{
-              "ThetaIn", "ThetaOut", "InputWorkspace", "OutputWorkspace",
-              "OutputWorkspaceBinned", "OutputWorkspaceWavelength",
-              "FirstTransmissionRun", "SecondTransmissionRun",
-              "MomentumTransferMin", "MomentumTransferMax",
-              "MomentumTransferStep", "ScaleFactor"}));
+          "ReflectometryISISLoadAndProcess",
+          std::vector<std::string>{"ThetaIn",
+                                   "ThetaOut",
+                                   "InputRunList",
+                                   "OutputWorkspace",
+                                   "OutputWorkspaceBinned",
+                                   "OutputWorkspaceWavelength",
+                                   "OutputWorkspaceFirstTransmission",
+                                   "OutputWorkspaceSecondTransmission",
+                                   "OutputWorkspaceTransmission",
+                                   "FirstTransmissionRunList",
+                                   "SecondTransmissionRunList",
+                                   "MomentumTransferMin",
+                                   "MomentumTransferMax",
+                                   "MomentumTransferStep",
+                                   "ScaleFactor",
+                                   "ReloadInvalidWorkspaces",
+                                   "SliceWorkspace",
+                                   "NumberOfSlices",
+                                   "TimeInterval",
+                                   "LogName",
+                                   "LogValueInterval",
+                                   "UseNewFilterAlgorithm",
+                                   "GroupTOFWorkspaces",
+                                   "Debug"}));
 }
 
 void QtRunsTableView::setJobsTableEnabled(bool enabled) {

@@ -43,6 +43,9 @@ public:
   virtual int totalItems() const = 0;
   virtual int completedItems() const = 0;
 
+  virtual bool exclude() const;
+  virtual std::string excludeReason() const;
+
   bool complete() const;
   bool success() const;
 

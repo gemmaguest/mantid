@@ -26,6 +26,7 @@ constexpr const char *RUNNING = "#f0e442"; // pale yellow
 constexpr const char *SUCCESS = "#d0f4d0"; // pale green
 constexpr const char *WARNING = "#e69f00"; // pale orange
 constexpr const char *FAILURE = "#accbff"; // pale blue
+constexpr const char *EXCLUDED = "#dddddd"; // very pale grey
 } // namespace Colour
 
 namespace { // unnamed
@@ -59,6 +60,12 @@ void applyWarningStateStyling(MantidWidgets::Batch::Cell &cell,
                               std::string const &errorMessage) {
   cell.setBackgroundColor(Colour::WARNING);
   cell.setToolTip(errorMessage);
+}
+
+void applyExcludedStateStyling(MantidWidgets::Batch::Cell &cell,
+                               std::string const &excludeReason) {
+  cell.setBackgroundColor(Colour::EXCLUDED);
+  cell.setToolTip(excludeReason);
 }
 
 /** Check if a group name exists in the given model.
@@ -819,7 +826,12 @@ void RunsTablePresenter::forAllCellsAt(
 void RunsTablePresenter::setRowStylingForItem(
     MantidWidgets::Batch::RowPath const &rowPath, Item const &item) {
   switch (item.state()) {
-  case State::ITEM_NOT_STARTED: // fall through
+  case State::ITEM_NOT_STARTED:
+    if (item.exclude())
+      forAllCellsAt(rowPath, applyExcludedStateStyling, item.excludeReason());
+    else
+      forAllCellsAt(rowPath, clearStateStyling);
+    break;
   case State::ITEM_STARTING:
     forAllCellsAt(rowPath, clearStateStyling);
     break;

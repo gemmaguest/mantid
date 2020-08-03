@@ -107,6 +107,18 @@ int Row::completedItems() const {
   return 0;
 }
 
+// Exclude a row if it has an exclude reason specified in the Options column
+bool Row::exclude() const {
+  return m_reductionOptions.find("ExcludeReason") != m_reductionOptions.end();
+}
+
+std::string Row::excludeReason() const {
+  if (!exclude())
+    throw std::runtime_error(
+        "Program error: expected exclude reason to be set");
+  return m_reductionOptions.find("ExcludeReason")->second;
+}
+
 bool operator!=(Row const &lhs, Row const &rhs) { return !(lhs == rhs); }
 
 bool operator==(Row const &lhs, Row const &rhs) {

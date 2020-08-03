@@ -327,6 +327,7 @@ void MainWindowPresenter::notifyLoadBatchRequested(int tabIndex) {
   }
   m_decoder->decodeBatch(m_view, tabIndex, map);
   m_batchPresenters[tabIndex].get()->setBatchUnsaved(false);
+  m_batchPresenters[tabIndex].get()->notifySettingsChanged();
 }
 
 void MainWindowPresenter::disableSaveAndLoadBatch() {
