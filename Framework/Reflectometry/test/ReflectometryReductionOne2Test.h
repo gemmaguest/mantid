@@ -615,29 +615,14 @@ public:
     TS_ASSERT_DELTA(outQ->y(0)[7], 2.841288, 1e-6);
   }
 
-  void test_sum_in_q_IvsQ_point_detector() {
-    // Test IvsQ workspace for a point detector
-    // No monitor normalization
-    // No direct beam normalization
-    // No transmission correction
-    // Processing instructions : 1
-
+  void test_sum_in_q_point_detector_throws() {
     ReflectometryReductionOne2 alg;
     setupAlgorithm(alg, 1.5, 15.0, "1");
     alg.setProperty("InputWorkspace", m_singleDetectorWS);
     alg.setProperty("SummationType", "SumInQ");
     alg.setProperty("ReductionType", "DivergentBeam");
     alg.setProperty("ThetaIn", 25.0);
-    MatrixWorkspace_sptr outQ = runAlgorithmQ(alg, 28);
-
-    // X range in outQ
-    TS_ASSERT_DELTA(outQ->x(0)[0], 0.279882, 1e-6);
-    TS_ASSERT_DELTA(outQ->x(0)[3], 0.310524, 1e-6);
-    TS_ASSERT_DELTA(outQ->x(0)[7], 0.363599, 1e-6);
-    // Y counts
-    TS_ASSERT_DELTA(outQ->y(0)[0], 2.900303, 1e-6);
-    TS_ASSERT_DELTA(outQ->y(0)[3], 2.886945, 1e-6);
-    TS_ASSERT_DELTA(outQ->y(0)[7], 2.607357, 1e-6);
+    TS_ASSERT_THROWS_ANYTHING(alg.execute());
   }
 
   void test_sum_in_q_exclude_partial_bins() {
@@ -758,27 +743,6 @@ public:
     TS_ASSERT_THROWS(alg.execute(), const std::invalid_argument &);
   }
 
-  void test_angle_correction_is_not_done_for_sum_in_q_for_single_detector() {
-    ReflectometryReductionOne2 alg;
-    setupAlgorithm(alg, 1.5, 15.0, "4");
-
-    double const detectorTheta = twoThetaForDetector4() / 2.0;
-    double const thetaIn = 22.0;
-    auto inputWS = MatrixWorkspace_sptr(m_multiDetectorWS->clone());
-    setYValuesToWorkspace(*inputWS);
-
-    alg.setProperty("InputWorkspace", inputWS);
-    alg.setProperty("ThetaIn", thetaIn);
-    alg.setProperty("SummationType", "SumInQ");
-    alg.setProperty("ReductionType", "DivergentBeam");
-    alg.execute();
-
-    MatrixWorkspace_sptr outLam = alg.getProperty("OutputWorkspaceWavelength");
-    MatrixWorkspace_sptr outQ = alg.getProperty("OutputWorkspace");
-    checkAngleCorrection(outLam, outQ, detectorTheta);
-    checkDetector4SummedInQ(outLam, outQ);
-  }
-
   void test_angle_correction_is_not_done_for_sum_in_q_for_multiple_detectors() {
     ReflectometryReductionOne2 alg;
     setupAlgorithm(alg, 1.5, 15.0, "3+4");
@@ -803,31 +767,14 @@ public:
     checkDetector3And4SummedInQ(outLam, outQ);
   }
 
-  void test_angle_correction_is_not_done_for_sum_in_q_for_multiple_groups() {
+  void test_sum_in_q_for_multiple_groups_throws() {
     ReflectometryReductionOne2 alg;
     setupAlgorithm(alg, 1.5, 15.0, "3+4, 4");
 
-    double const detectorTheta = twoThetaForDetector3() / 2.0;
-    double const thetaIn = 22.0;
-    auto inputWS = MatrixWorkspace_sptr(m_multiDetectorWS->clone());
-    setYValuesToWorkspace(*inputWS);
-
-    alg.setProperty("InputWorkspace", inputWS);
-    alg.setProperty("ThetaIn", thetaIn);
+    alg.setProperty("ThetaIn", 22.0);
     alg.setProperty("SummationType", "SumInQ");
     alg.setProperty("ReductionType", "DivergentBeam");
-    alg.execute();
-
-    MatrixWorkspace_sptr outLam = alg.getProperty("OutputWorkspaceWavelength");
-    MatrixWorkspace_sptr outQ = alg.getProperty("OutputWorkspace");
-    checkAngleCorrection(outLam, outQ, detectorTheta);
-
-    // The output workspace has two spectra, containing the results for each
-    // group. Note that the cropping in wavelength is done based on all groups
-    // so the results for detector 4 here are slightly different to other tests
-    // that process this detector in a solo group
-    checkDetector3And4SummedInQ(outLam, outQ);
-    checkDetector4SummedInQCroppedToDetector3And4(outLam, outQ, 1);
+    TS_ASSERT_THROWS_ANYTHING(alg.execute());
   }
 
   void test_outputs_when_debug_is_false_and_IvsLam_name_not_set() {
