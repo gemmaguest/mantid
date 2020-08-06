@@ -620,7 +620,7 @@ bool ReflectometryReductionOne2::useDetectorAngleForQConversion(
   // If summing in Q, the output workspace is constructed such that the angle
   // of the detector is correct for the conversion to Q
   if (summingInQ())
-    return true;
+    return false;
 
   // Otherwise we are summing in lambda. If ThetaIn was not specified then no
   // correction was requested so assume the detector angle is correct
@@ -666,13 +666,22 @@ ReflectometryReductionOne2::convertToQ(const MatrixWorkspace_sptr &inputWS) {
     // single region of interest (i.e. a single histogram in the summed
     // workspace) because different regions of interest would be centred around
     // different angles.
-    if (inputWS->getNumberHistograms() > 1) {
+    if (detectorGroups().size() != 1) {
       throw std::invalid_argument(
           "Angle correction using ThetaIn can only be done for a single group "
           "in ProcessingInstructions, but the number of groups specified was " +
           std::to_string(inputWS->getNumberHistograms()));
     }
-    double const theta = getProperty("ThetaIn");
+
+    // The angle to use in conversion is different for each mode
+    double theta = 0.0;
+    if (summingInQ() && getPropertyValue("ReductionType") == "DivergentBeam")
+      theta = (twoThetaR(detectorGroups()[0]) - theta0()) * radToDeg;
+    else if (summingInQ())
+      theta = twoThetaR(detectorGroups()[0]) * radToDeg / 2.;
+    else
+      theta = getProperty("ThetaIn");
+
     auto refRoi = this->createChildAlgorithm("RefRoi");
     refRoi->initialize();
     refRoi->setProperty("InputWorkspace", inputWS);
@@ -796,17 +805,7 @@ void ReflectometryReductionOne2::findTheta0() {
 double
 ReflectometryReductionOne2::twoThetaR(const std::vector<size_t> &detectors) {
   // Get the twoTheta value for the destinaion pixel that we're projecting onto
-  double twoThetaR =
-      getDetectorTwoTheta(m_spectrumInfo, twoThetaRDetectorIdx(detectors));
-  if (getPropertyValue("ReductionType") == "DivergentBeam") {
-    // The angle that should be used in the final conversion to Q is
-    // (twoThetaR-theta0). However, the angle actually used by ConvertUnits is
-    // twoThetaD/2 where twoThetaD is the detector's twoTheta angle. Since it
-    // is not easy to change what angle ConvertUnits uses, we can compensate by
-    // setting twoThetaR = twoThetaD/2+theta0
-    twoThetaR = twoThetaR / 2.0 + theta0();
-  }
-  return twoThetaR;
+  return getDetectorTwoTheta(m_spectrumInfo, twoThetaRDetectorIdx(detectors));
 }
 
 /**

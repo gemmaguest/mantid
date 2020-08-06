@@ -1024,7 +1024,7 @@ public:
     auto outputWS = std::dynamic_pointer_cast<MatrixWorkspace>(
         AnalysisDataService::Instance().retrieve("IvsQ"));
     checkWorkspaceHistory(outputWS,
-                          {"ConvertUnits", "CropWorkspace", "ConvertUnits"});
+                          {"ConvertUnits", "CropWorkspace", "RefRoi"});
   }
 
   void test_history_for_sum_in_q_with_monitor_normalisation() {
@@ -1041,7 +1041,7 @@ public:
     checkWorkspaceHistory(outputWS,
                           {"ConvertUnits", "CropWorkspace", "ConvertUnits",
                            "CalculateFlatBackground", "RebinToWorkspace",
-                           "Divide", "CropWorkspace", "ConvertUnits"});
+                           "Divide", "CropWorkspace", "RefRoi"});
   }
 
   void test_history_for_sum_in_q_with_transmission_normalisation() {
@@ -1055,10 +1055,9 @@ public:
     alg.execute();
     auto outputWS = std::dynamic_pointer_cast<MatrixWorkspace>(
         AnalysisDataService::Instance().retrieve("IvsQ"));
-    checkWorkspaceHistory(outputWS,
-                          {"ConvertUnits", "CreateTransmissionWorkspace",
-                           "RebinToWorkspace", "Divide", "CropWorkspace",
-                           "ConvertUnits"});
+    checkWorkspaceHistory(
+        outputWS, {"ConvertUnits", "CreateTransmissionWorkspace",
+                   "RebinToWorkspace", "Divide", "CropWorkspace", "RefRoi"});
   }
 
   void test_IvsQ_is_not_distribution_data() {
@@ -1127,7 +1126,7 @@ public:
         AnalysisDataService::Instance().retrieve("IvsQ"));
     checkWorkspaceHistory(outputWS,
                           {"ReflectometryBackgroundSubtraction", "ConvertUnits",
-                           "CropWorkspace", "ConvertUnits"});
+                           "CropWorkspace", "RefRoi"});
   }
 
 private:
