@@ -10,6 +10,7 @@
 #include "GUI/Experiment/IExperimentPresenter.h"
 #include "GUI/Instrument/IInstrumentPresenter.h"
 #include "GUI/MainWindow/IMainWindowPresenter.h"
+#include "GUI/RoiSelector/IRoiPresenter.h"
 #include "GUI/Runs/IRunsPresenter.h"
 #include "GUI/Save/ISavePresenter.h"
 #include "IBatchView.h"
@@ -29,6 +30,8 @@ using API::IConfiguredAlgorithm_sptr;
  * presenter
  * @param experimentPresenter :: [input] A pointer to the 'Experiment' tab
  * presenter
+ * @param roiPresenter :: [input] A pointer to the 'Regions of Interest' tab
+ * presenter
  * @param instrumentPresenter :: [input] A pointer to the 'Instrument' tab
  * presenter
  * @param savePresenter :: [input] A pointer to the 'Save ASCII' tab presenter
@@ -38,12 +41,14 @@ BatchPresenter::BatchPresenter(
     std::unique_ptr<IRunsPresenter> runsPresenter,
     std::unique_ptr<IEventPresenter> eventPresenter,
     std::unique_ptr<IExperimentPresenter> experimentPresenter,
+    std::unique_ptr<IRoiPresenter> roiPresenter,
     std::unique_ptr<IInstrumentPresenter> instrumentPresenter,
     std::unique_ptr<ISavePresenter> savePresenter)
     : m_view(view), m_mainPresenter(),
       m_runsPresenter(std::move(runsPresenter)),
       m_eventPresenter(std::move(eventPresenter)),
       m_experimentPresenter(std::move(experimentPresenter)),
+      m_roiPresenter(std::move(roiPresenter)),
       m_instrumentPresenter(std::move(instrumentPresenter)),
       m_savePresenter(std::move(savePresenter)), m_unsavedBatchFlag(false),
       m_jobRunner(new BatchJobRunner(std::move(model))) {
@@ -54,6 +59,7 @@ BatchPresenter::BatchPresenter(
   m_savePresenter->acceptMainPresenter(this);
   m_eventPresenter->acceptMainPresenter(this);
   m_experimentPresenter->acceptMainPresenter(this);
+  m_roiPresenter->acceptMainPresenter(this);
   m_instrumentPresenter->acceptMainPresenter(this);
   m_runsPresenter->acceptMainPresenter(this);
 

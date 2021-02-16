@@ -10,6 +10,7 @@
 #include "GUI/Event/EventPresenterFactory.h"
 #include "GUI/Experiment/ExperimentPresenterFactory.h"
 #include "GUI/Instrument/InstrumentPresenterFactory.h"
+#include "GUI/RoiSelector/RoiPresenterFactory.h"
 #include "GUI/Runs/RunsPresenterFactory.h"
 #include "GUI/Save/SavePresenterFactory.h"
 #include "IBatchPresenter.h"
@@ -28,11 +29,13 @@ public:
       RunsPresenterFactory runsPresenterFactory,
       EventPresenterFactory eventPresenterFactory,
       ExperimentPresenterFactory experimentPresenterFactory,
+      RoiPresenterFactory roiPresenterFactory,
       InstrumentPresenterFactory instrumentPresenterFactory,
       SavePresenterFactory savePresenterFactory)
       : m_runsPresenterFactory(std::move(runsPresenterFactory)),
         m_eventPresenterFactory(std::move(eventPresenterFactory)),
         m_experimentPresenterFactory(std::move(experimentPresenterFactory)),
+        m_roiPresenterFactory(std::move(roiPresenterFactory)),
         m_instrumentPresenterFactory(std::move(instrumentPresenterFactory)),
         m_savePresenterFactory(std::move(savePresenterFactory)) {}
 
@@ -41,6 +44,7 @@ public:
     auto eventPresenter = m_eventPresenterFactory.make(view->eventHandling());
     auto experimentPresenter =
         m_experimentPresenterFactory.make(view->experiment());
+    auto roiPresenter = m_roiPresenterFactory.make(view->roi());
     auto instrumentPresenter =
         m_instrumentPresenterFactory.make(view->instrument());
     auto savePresenter = m_savePresenterFactory.make(view->save());
@@ -52,13 +56,15 @@ public:
     return std::make_unique<BatchPresenter>(
         view, std::move(model), std::move(runsPresenter),
         std::move(eventPresenter), std::move(experimentPresenter),
-        std::move(instrumentPresenter), std::move(savePresenter));
+        std::move(roiPresenter), std::move(instrumentPresenter),
+        std::move(savePresenter));
   }
 
 private:
   RunsPresenterFactory m_runsPresenterFactory;
   EventPresenterFactory m_eventPresenterFactory;
   ExperimentPresenterFactory m_experimentPresenterFactory;
+  RoiPresenterFactory m_roiPresenterFactory;
   InstrumentPresenterFactory m_instrumentPresenterFactory;
   SavePresenterFactory m_savePresenterFactory;
 };
