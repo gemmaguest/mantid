@@ -81,6 +81,7 @@ public:
   MOCK_METHOD0(notifySettingsChanged, void());
   MOCK_METHOD1(notifySetRoundPrecision, void(int &));
   MOCK_METHOD0(notifyResetRoundPrecision, void());
+  MOCK_METHOD1(notifyProcessingInstructionsChanged, void(std::string const &));
   MOCK_CONST_METHOD0(isProcessing, bool());
   MOCK_CONST_METHOD0(isAutoreducing, bool());
   MOCK_CONST_METHOD0(isAnyBatchProcessing, bool());
@@ -162,6 +163,7 @@ public:
   MOCK_METHOD1(notifyInstrumentChanged, void(std::string const &));
   MOCK_METHOD0(notifyAllWorkspacesDeleted, void());
   MOCK_METHOD0(restoreDefaults, void());
+  MOCK_METHOD1(notifyProcessingInstructionsChanged, void(std::string const &));
 };
 
 class MockRoiPresenter : public IRoiPresenter {

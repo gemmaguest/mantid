@@ -115,6 +115,24 @@ PerThetaDefaults const *Experiment::wildcardDefaults() const {
   }
 }
 
+PerThetaDefaults *Experiment::mutableWildcardDefaults() {
+  auto wildcardMatch =
+      std::find_if(m_perThetaDefaults.begin(), m_perThetaDefaults.end(),
+                   [](PerThetaDefaults &candidate) -> bool {
+                     return candidate.isWildcard();
+                   });
+  if (wildcardMatch != m_perThetaDefaults.cend()) {
+    return &(*wildcardMatch);
+  } else {
+    return nullptr;
+  }
+}
+
+void Experiment::setProcessingInstructions(
+    std::string const &processingInstructions) {
+  mutableWildcardDefaults()->setProcessingInstructions(processingInstructions);
+}
+
 bool operator!=(Experiment const &lhs, Experiment const &rhs) {
   return !(lhs == rhs);
 }

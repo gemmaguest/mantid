@@ -75,6 +75,8 @@ public:
   boost::optional<ProcessingInstructions>
   backgroundProcessingInstructions() const;
 
+  void setProcessingInstructions(std::string const &processingInstructions);
+
 private:
   boost::optional<double> m_theta;
   TransmissionRunPair m_transmissionRuns;

@@ -55,6 +55,7 @@ public:
   void acceptMainPresenter(IBatchPresenter *mainPresenter) override;
   Experiment const &experiment() const override;
 
+  // ExperimentViewSubscriber overrides
   void notifySettingsChanged() override;
   void notifyRestoreDefaultsRequested() override;
   void notifySummationTypeChanged() override;
@@ -62,6 +63,7 @@ public:
   void notifyRemovePerAngleDefaultsRequested(int index) override;
   void notifyPerAngleDefaultsChanged(int row, int column) override;
 
+  // IExperimentPresenter overrides
   void notifyReductionPaused() override;
   void notifyReductionResumed() override;
   void notifyAutoreductionPaused() override;
@@ -69,6 +71,8 @@ public:
   void notifyInstrumentChanged(std::string const &instrumentName) override;
   void notifyAllWorkspacesDeleted() override;
   void restoreDefaults() override;
+  void notifyProcessingInstructionsChanged(
+      std::string const &processingInstructions) override;
 
 protected:
   std::unique_ptr<IExperimentOptionDefaults> m_experimentDefaults;

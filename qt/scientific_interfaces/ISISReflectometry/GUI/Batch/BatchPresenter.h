@@ -73,6 +73,8 @@ public:
   void notifySettingsChanged() override;
   void notifySetRoundPrecision(int &precision) override;
   void notifyResetRoundPrecision() override;
+  void notifyProcessingInstructionsChanged(
+      std::string const &processingInstructions) override;
   void notifyAnyBatchReductionResumed() override;
   void notifyAnyBatchReductionPaused() override;
   void notifyAnyBatchAutoreductionResumed() override;
