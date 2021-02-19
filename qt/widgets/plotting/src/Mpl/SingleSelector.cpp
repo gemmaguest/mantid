@@ -5,7 +5,7 @@
 //   Institut Laue - Langevin & CSNS, Institute of High Energy Physics, CAS
 // SPDX - License - Identifier: GPL - 3.0 +
 #include "MantidQtWidgets/Plotting/Mpl/SingleSelector.h"
-#include "MantidQtWidgets/Plotting/Mpl/PreviewPlot.h"
+#include "MantidQtWidgets/Plotting/Mpl/PreviewPlotBase.h"
 
 using namespace MantidQt::Widgets::MplCpp;
 
@@ -22,7 +22,7 @@ QHash<QString, QVariant> defaultLineKwargs() {
 namespace MantidQt {
 namespace MantidWidgets {
 
-SingleSelector::SingleSelector(PreviewPlot *plot, SelectType type,
+SingleSelector::SingleSelector(PreviewPlotBase *plot, SelectType type,
                                double position, bool visible,
                                const QColor &colour)
     : QObject(), m_plot(plot),

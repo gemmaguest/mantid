@@ -149,6 +149,7 @@ set(
   src/Mpl/ContourPreviewPlot.cpp
   src/Mpl/PeakPicker.cpp
   src/Mpl/PreviewPlot.cpp
+  src/Mpl/PreviewPlotBase.cpp
   src/Mpl/RangeSelector.cpp
   src/Mpl/SingleSelector.cpp
 )
@@ -158,6 +159,7 @@ set(
   inc/MantidQtWidgets/Plotting/Mpl/ContourPreviewPlot.h
   inc/MantidQtWidgets/Plotting/Mpl/PeakPicker.h
   inc/MantidQtWidgets/Plotting/Mpl/PreviewPlot.h
+  inc/MantidQtWidgets/Plotting/Mpl/PreviewPlotBase.h
   inc/MantidQtWidgets/Plotting/Mpl/RangeSelector.h
   inc/MantidQtWidgets/Plotting/Mpl/SingleSelector.h
 )
