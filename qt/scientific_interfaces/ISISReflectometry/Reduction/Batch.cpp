@@ -38,6 +38,15 @@ PerThetaDefaults const *Batch::defaultsForTheta(double thetaAngle) const {
                                        runsTable().thetaTolerance());
 }
 
+PerThetaDefaults const *
+Batch::defaultsForTheta(boost::optional<double> const &thetaAngle) const {
+  if (thetaAngle) {
+    return experiment().defaultsForTheta(*thetaAngle,
+                                         runsTable().thetaTolerance());
+  }
+  return experiment().wildcardDefaults();
+}
+
 PerThetaDefaults const *Batch::wildcardDefaults() const {
   return experiment().wildcardDefaults();
 }

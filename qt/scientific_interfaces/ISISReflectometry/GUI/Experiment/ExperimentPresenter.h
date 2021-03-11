@@ -72,7 +72,8 @@ public:
   void notifyAllWorkspacesDeleted() override;
   void restoreDefaults() override;
   void notifyProcessingInstructionsChanged(
-      std::string const &processingInstructions) override;
+      std::string const &processingInstructions,
+      boost::optional<double> const &angle) override;
 
 protected:
   std::unique_ptr<IExperimentOptionDefaults> m_experimentDefaults;

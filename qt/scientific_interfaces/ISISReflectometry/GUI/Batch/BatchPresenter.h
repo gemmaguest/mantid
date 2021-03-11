@@ -74,6 +74,7 @@ public:
   void notifySetRoundPrecision(int &precision) override;
   void notifyResetRoundPrecision() override;
   void notifyRoiSaved() override;
+  void notifyRoiDataUpdated() override;
   void notifyAnyBatchReductionResumed() override;
   void notifyAnyBatchReductionPaused() override;
   void notifyAnyBatchAutoreductionResumed() override;
@@ -103,6 +104,7 @@ public:
   void clearADSHandle() override;
 
 private:
+  Batch const &model() const;
   bool
   startBatch(std::deque<MantidQt::API::IConfiguredAlgorithm_sptr> algorithms);
   void resumeReduction();
@@ -114,6 +116,7 @@ private:
   void notifyAutoreductionPaused();
   void autoreductionCompleted();
   void settingsChanged();
+  void setSelectedRoi();
 
   IBatchView *m_view;
   IMainWindowPresenter *m_mainPresenter;

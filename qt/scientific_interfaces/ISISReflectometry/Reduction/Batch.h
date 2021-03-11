@@ -39,6 +39,8 @@ public:
                      std::vector<MantidWidgets::Batch::RowLocation> const
                          &selectedRowLocations) const;
   PerThetaDefaults const *defaultsForTheta(double thetaAngle) const;
+  PerThetaDefaults const *
+  defaultsForTheta(boost::optional<double> const &thetaAngle) const;
   PerThetaDefaults const *wildcardDefaults() const;
   void resetState();
   void resetSkippedItems();
